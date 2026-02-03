@@ -34,7 +34,7 @@ api.interceptors.response.use(
 );
 
 export default {
-  // Авторизация
+  // ==================== АВТОРИЗАЦИЯ ====================
   async login(username, password) {
     const formData = new FormData();
     formData.append('username', username);
@@ -53,7 +53,7 @@ export default {
     return response.data;
   },
 
-  // Пользователи
+  // ==================== ПОЛЬЗОВАТЕЛИ ====================
   async registerUser(username, password) {
     const response = await api.post('/user/create_user', {
       username,
@@ -77,7 +77,7 @@ export default {
     return response.data;
   },
 
-  // Посты
+  // ==================== ПОСТЫ ====================
   async getAllPosts() {
     const response = await api.get('/post/get_all_posts');
     return response.data;
@@ -94,5 +94,47 @@ export default {
   async deletePost(postId) {
     const response = await api.delete(`/post/delete-post?post_id=${postId}`);
     return response.data;
+  },
+
+  // ==================== ИЗБРАННЫЕ ПОСТЫ ====================
+  async addToFavorites(postId) {
+    const response = await api.post(`/post/add-to-favorites?post_id=${postId}`);
+    return response.data;
+  },
+
+  async removeFromFavorites(postId) {
+    const response = await api.delete(`/post/remove-from-favorites?post_id=${postId}`);
+    return response.data;
+  },
+
+  async getFavoritePosts() {
+    const response = await api.get('/post/get-favorite-posts');
+    return response.data;
+  },
+
+  // ==================== ЧАТ И СООБЩЕНИЯ ====================
+  async sendMessage(receiverId, content) {
+    const response = await api.post('/chat/send-message', {
+      receiver_id: receiverId,
+      content
+    });
+    return response.data;
+  },
+
+  async getChatHistory(user1Id, user2Id) {
+    const response = await api.get(`/chat/history/${user1Id}/${user2Id}/`);
+    return response.data;
+  },
+
+  async markMessageAsRead(messageId) {
+    const response = await api.put(`/chat/messages/${messageId}/read/`);
+    return response.data;
+  },
+
+  // ==================== WEBSOCKET ====================
+  createWebSocket(userId) {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host;
+    return new WebSocket(`${wsProtocol}//${wsHost}/ws/chat/ws/${userId}`);
   }
 };

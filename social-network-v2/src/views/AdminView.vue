@@ -4,19 +4,26 @@
     
     <div class="container">
       <div class="page-header">
-        <h1>Админ-панель</h1>
+        <h1>⚙️ Админ-панель</h1>
         <p class="subtitle">Управление постами и пользователями</p>
       </div>
       
       <!-- Статистика -->
       <div class="stats-grid">
         <div class="stat-card">
+          <div class="stat-icon">📝</div>
           <div class="stat-value">{{ posts.length }}</div>
           <div class="stat-label">Всего постов</div>
         </div>
         <div class="stat-card">
+          <div class="stat-icon">👥</div>
           <div class="stat-value">{{ users.length }}</div>
           <div class="stat-label">Всего пользователей</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👤</div>
+          <div class="stat-value">{{ currentUser?.username }}</div>
+          <div class="stat-label">Текущий админ</div>
         </div>
       </div>
       
@@ -26,20 +33,21 @@
           :class="['tab', { active: activeTab === 'posts' }]"
           @click="activeTab = 'posts'"
         >
-          Посты
+          📝 Посты
         </button>
         <button 
           :class="['tab', { active: activeTab === 'users' }]"
           @click="activeTab = 'users'"
         >
-          Пользователи
+          👥 Пользователи
         </button>
       </div>
       
       <!-- Посты -->
       <div v-show="activeTab === 'posts'" class="tab-content">
         <div v-if="loadingPosts" class="loading">
-          Загрузка постов...
+          <div class="spinner"></div>
+          <p>Загрузка постов...</p>
         </div>
         
         <div v-else-if="postsError" class="error-message">
@@ -47,7 +55,8 @@
         </div>
         
         <div v-else-if="posts.length === 0" class="empty-state">
-          Нет постов
+          <span class="big-icon">📭</span>
+          <h3>Нет постов</h3>
         </div>
         
         <div v-else class="posts-grid">
@@ -65,7 +74,8 @@
       <!-- Пользователи -->
       <div v-show="activeTab === 'users'" class="tab-content">
         <div v-if="loadingUsers" class="loading">
-          Загрузка пользователей...
+          <div class="spinner"></div>
+          <p>Загрузка пользователей...</p>
         </div>
         
         <div v-else-if="usersError" class="error-message">
@@ -73,7 +83,8 @@
         </div>
         
         <div v-else-if="users.length === 0" class="empty-state">
-          Нет пользователей
+          <span class="big-icon">👥</span>
+          <h3>Нет пользователей</h3>
         </div>
         
         <div v-else class="users-table">
@@ -82,19 +93,31 @@
               <tr>
                 <th>ID</th>
                 <th>Имя пользователя</th>
+                <th>Статус</th>
                 <th>Действия</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="user in users" :key="user.id">
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
+                <td><strong>{{ user.id }}</strong></td>
+                <td>
+                  <div class="user-cell">
+                    <div class="user-avatar-tiny">{{ user.username.charAt(0).toUpperCase() }}</div>
+                    {{ user.username }}
+                  </div>
+                </td>
+                <td>
+                  <span :class="['status-badge', user.id === currentUser?.id ? 'current' : '']">
+                    {{ user.id === currentUser?.id ? 'Вы' : 'Пользователь' }}
+                  </span>
+                </td>
                 <td>
                   <button 
                     @click="handleDeleteUser(user.id)"
                     class="btn-delete-small"
                     :disabled="deletingUserId === user.id || user.id === currentUser?.id"
                   >
+                    <span class="icon">{{ deletingUserId === user.id ? '⏳' : '🗑️' }}</span>
                     {{ deletingUserId === user.id ? 'Удаление...' : 'Удалить' }}
                   </button>
                 </td>
@@ -196,7 +219,7 @@ onMounted(() => {
 
 <style scoped>
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 2rem 2rem;
 }
@@ -207,34 +230,47 @@ onMounted(() => {
 
 .page-header h1 {
   color: #111827;
-  font-size: 2rem;
+  font-size: 2.5rem;
   margin-bottom: 0.5rem;
 }
 
 .subtitle {
   color: #6b7280;
-  font-size: 1rem;
+  font-size: 1.125rem;
 }
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
 .stat-card {
   background: white;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
   text-align: center;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.stat-card:hover {
+  border-color: #667eea;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 12px rgba(102, 126, 234, 0.15);
+}
+
+.stat-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
 }
 
 .stat-value {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: bold;
-  color: #3b82f6;
+  color: #667eea;
   margin-bottom: 0.5rem;
 }
 
@@ -255,21 +291,21 @@ onMounted(() => {
   background: none;
   border: none;
   color: #6b7280;
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 600;
   cursor: pointer;
-  border-bottom: 2px solid transparent;
+  border-bottom: 3px solid transparent;
   margin-bottom: -2px;
   transition: all 0.3s;
 }
 
 .tab:hover {
-  color: #3b82f6;
+  color: #667eea;
 }
 
 .tab.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
+  color: #667eea;
+  border-bottom-color: #667eea;
 }
 
 .tab-content {
@@ -287,34 +323,68 @@ onMounted(() => {
   }
 }
 
-.loading,
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  gap: 1rem;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 .empty-state {
   text-align: center;
-  padding: 3rem;
-  color: #6b7280;
-  font-size: 1.125rem;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.big-icon {
+  font-size: 5rem;
+  display: block;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  color: #111827;
+  font-size: 1.5rem;
 }
 
 .error-message {
   padding: 1rem;
   background: #fee2e2;
   color: #991b1b;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   font-size: 0.875rem;
-  margin-bottom: 1rem;
+  font-weight: 500;
 }
 
 .posts-grid {
   display: grid;
   gap: 1.5rem;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
 }
 
 .users-table {
   background: white;
-  border-radius: 0.5rem;
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
 }
 
 table {
@@ -323,19 +393,19 @@ table {
 }
 
 thead {
-  background: #f9fafb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 th {
-  padding: 1rem;
+  padding: 1.25rem 1.5rem;
   text-align: left;
-  font-weight: 600;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 td {
-  padding: 1rem;
+  padding: 1.25rem 1.5rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -343,8 +413,45 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
+tbody tr {
+  transition: background 0.3s;
+}
+
 tbody tr:hover {
   background: #f9fafb;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar-tiny {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.875rem;
+}
+
+.status-badge {
+  padding: 0.375rem 0.875rem;
+  border-radius: 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.status-badge.current {
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 .btn-delete-small {
@@ -352,20 +459,29 @@ tbody tr:hover {
   background: #ef4444;
   color: white;
   border: none;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: background 0.3s;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .btn-delete-small:hover:not(:disabled) {
   background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3);
 }
 
 .btn-delete-small:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.icon {
+  font-size: 1rem;
 }
 
 @media (max-width: 768px) {
@@ -375,6 +491,10 @@ tbody tr:hover {
   
   .users-table {
     overflow-x: auto;
+  }
+  
+  table {
+    min-width: 600px;
   }
 }
 </style>

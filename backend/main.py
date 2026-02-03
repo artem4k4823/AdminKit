@@ -5,6 +5,7 @@ import uvicorn
 from app.api_v1.user_operation_views import router as user_router
 from app.api_v1.auth_veiws import router as OAuth_jwt_router
 from app.api_v1.posts_veiws import router as posts_router
+from app.api_v1.chat_veiws import router as chat_router
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -16,6 +17,7 @@ app.add_middleware(
 app.include_router(user_router)
 app.include_router(OAuth_jwt_router)
 app.include_router(posts_router)
+app.include_router(chat_router)
 
 if __name__ == "__main__":
     uvicorn.run("main:app",reload=True)

@@ -3,6 +3,8 @@ import { useAuthStore } from '../stores/auth';
 import LoginView from '../views/LoginView.vue';
 import RegisterView from '../views/RegisterView.vue';
 import HomeView from '../views/HomeView.vue';
+import ProfileView from '../views/ProfileView.vue';
+import ChatView from '../views/ChatView.vue';
 import AdminView from '../views/AdminView.vue';
 
 const routes = [
@@ -29,6 +31,18 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/profile',
+    name: 'Profile',
+    component: ProfileView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/chat',
+    name: 'Chat',
+    component: ChatView,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/admin',
     name: 'Admin',
     component: AdminView,
@@ -44,13 +58,11 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore();
 
-  // Если требуется авторизация
   if (to.meta.requiresAuth) {
     if (!authStore.isAuthenticated) {
       return next('/login');
     }
 
-    // Если пользователь не загружен, загружаем
     if (!authStore.user) {
       try {
         await authStore.fetchUser();
@@ -59,13 +71,11 @@ router.beforeEach(async (to, from, next) => {
       }
     }
 
-    // Проверка прав администратора
     if (to.meta.requiresAdmin && !authStore.isAdmin) {
       return next('/home');
     }
   }
 
-  // Если страница только для гостей
   if (to.meta.requiresGuest && authStore.isAuthenticated) {
     return next('/home');
   }
