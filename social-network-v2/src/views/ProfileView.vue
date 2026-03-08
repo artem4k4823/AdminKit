@@ -74,6 +74,49 @@
 
       <!-- Список чатов -->
       <div v-show="activeTab === 'chats'" class="tab-content">
+        <!-- Поиск пользователя -->
+        <div class="search-section">
+          <h3>🔍 Найти пользователя</h3>
+          <div class="search-form">
+            <input 
+              v-model="searchUsername"
+              type="text"
+              placeholder="Введите имя пользователя..."
+              @keydown.enter="handleSearch"
+              class="search-input"
+            />
+            <button 
+              @click="handleSearch" 
+              :disabled="!searchUsername.trim() || searching"
+              class="btn-search"
+            >
+              {{ searching ? '⏳' : '🔍' }} Найти
+            </button>
+          </div>
+          
+          <div v-if="searchError" class="error-message">
+            {{ searchError }}
+          </div>
+          
+          <div v-if="searchResult" class="search-result">
+            <div class="user-card" @click="openChat(searchResult)">
+              <div class="user-avatar">{{ searchResult.username.charAt(0).toUpperCase() }}</div>
+              <div class="user-info">
+                <h3>{{ searchResult.username }}</h3>
+                <p class="user-id">ID: {{ searchResult.id }}</p>
+              </div>
+              <button class="btn-chat">
+                <span class="icon">💬</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="divider"></div>
+        
+        <!-- Все пользователи -->
+        <h3>👥 Все пользователи</h3>
+        
         <div v-if="loadingUsers" class="loading">
           <div class="spinner"></div>
           <p>Загрузка пользователей...</p>
@@ -132,6 +175,10 @@ const loadingUsers = ref(false);
 const favoritesError = ref('');
 const usersError = ref('');
 const likingPostId = ref(null);
+const searchUsername = ref('');
+const searchResult = ref(null);
+const searchError = ref('');
+const searching = ref(false);
 
 const currentUser = computed(() => authStore.currentUser);
 
@@ -181,6 +228,30 @@ const handleRemoveFromFavorites = async (postId) => {
 const openChat = (user) => {
   chatStore.setCurrentChat(user.id);
   router.push({ name: 'Chat', query: { userId: user.id, username: user.username } });
+};
+
+const handleSearch = async () => {
+  if (!searchUsername.value.trim()) return;
+  
+  searching.value = true;
+  searchError.value = '';
+  searchResult.value = null;
+  
+  try {
+    const user = await api.getUserByUsername(searchUsername.value.trim());
+    
+    // Проверяем что это не текущий пользователь
+    if (user.id === currentUser.value?.id) {
+      searchError.value = 'Это вы!';
+      return;
+    }
+    
+    searchResult.value = user;
+  } catch (err) {
+    searchError.value = err.response?.data?.detail || 'Пользователь не найден';
+  } finally {
+    searching.value = false;
+  }
 };
 
 onMounted(() => {
@@ -350,6 +421,88 @@ onMounted(() => {
   border-radius: 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+.search-section {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.search-section h3 {
+  color: #111827;
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.search-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-search {
+  padding: 0.875rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.btn-search:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-search:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.search-result {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.divider {
+  height: 2px;
+  background: linear-gradient(to right, transparent, #e5e7eb, transparent);
+  margin: 2rem 0;
 }
 
 .posts-grid {

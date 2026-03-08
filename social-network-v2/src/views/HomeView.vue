@@ -85,13 +85,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import { useChatStore } from '../stores/chat';
 import api from '../services/api';
 import Navbar from '../components/Navbar.vue';
 import PostCard from '../components/PostCard.vue';
 
 const authStore = useAuthStore();
+const chatStore = useChatStore();
 
 const posts = ref([]);
 const favoritePosts = ref([]);
@@ -143,13 +145,36 @@ const handleCreatePost = async () => {
   createError.value = '';
   
   try {
-    await api.createPost(newPost.value.title, newPost.value.description);
+    console.log('📝 Создаем пост...');
+    const createdPost = await api.createPost(newPost.value.title, newPost.value.description);
+    console.log('✅ Пост создан через API:', createdPost);
     
     newPost.value.title = '';
     newPost.value.description = '';
     
     await fetchPosts();
+    
+    // Проверяем WebSocket перед отправкой
+    console.log('🔍 Проверяем WebSocket. Подключен:', chatStore.isConnected);
+    
+    if (chatStore.isConnected) {
+      // Отправляем событие через WebSocket всем подключенным пользователям
+      chatStore.broadcastEvent('new_post', { post: createdPost });
+      console.log('📤 Событие new_post отправлено через WebSocket');
+    } else {
+      console.warn('⚠️ WebSocket не подключен, пытаемся переподключить...');
+      try {
+        await chatStore.initWebSocket();
+        if (chatStore.isConnected) {
+          chatStore.broadcastEvent('new_post', { post: createdPost });
+          console.log('📤 Событие new_post отправлено после переподключения');
+        }
+      } catch (err) {
+        console.error('❌ Не удалось переподключить WebSocket:', err);
+      }
+    }
   } catch (err) {
+    console.error('❌ Ошибка создания поста:', err);
     createError.value = err.response?.data?.detail || 'Ошибка создания поста';
   } finally {
     creating.value = false;
@@ -167,6 +192,9 @@ const handleDeletePost = async (postId) => {
     await api.deletePost(postId);
     await fetchPosts();
     await fetchFavorites();
+    
+    // Отправляем событие через WebSocket
+    chatStore.broadcastEvent('delete_post', { post_id: postId });
   } catch (err) {
     alert(err.response?.data?.detail || 'Ошибка удаления поста');
   } finally {
@@ -178,11 +206,22 @@ const handleToggleLike = async (postId) => {
   likingPostId.value = postId;
   
   try {
-    if (isPostLiked(postId)) {
+    const wasLiked = isPostLiked(postId);
+    
+    if (wasLiked) {
       await api.removeFromFavorites(postId);
+      chatStore.broadcastEvent('unlike_post', { 
+        post_id: postId, 
+        user_id: currentUser.value?.id 
+      });
     } else {
       await api.addToFavorites(postId);
+      chatStore.broadcastEvent('like_post', { 
+        post_id: postId, 
+        user_id: currentUser.value?.id 
+      });
     }
+    
     await fetchFavorites();
   } catch (err) {
     alert(err.response?.data?.detail || 'Ошибка при работе с избранным');
@@ -191,9 +230,67 @@ const handleToggleLike = async (postId) => {
   }
 };
 
-onMounted(() => {
+onMounted(async () => {
   fetchPosts();
   fetchFavorites();
+  
+  console.log('🏠 HomeView смонтирован');
+  console.log('🔍 Проверяем WebSocket соединение...');
+  console.log('WebSocket подключен:', chatStore.isConnected);
+  
+  // Если WebSocket не подключен, инициализируем его
+  if (!chatStore.isConnected) {
+    console.log('⚠️ WebSocket не подключен, инициализируем...');
+    try {
+      await chatStore.initWebSocket();
+      console.log('✅ WebSocket успешно инициализирован в HomeView');
+    } catch (err) {
+      console.error('❌ Ошибка инициализации WebSocket:', err);
+    }
+  } else {
+    console.log('✅ WebSocket уже подключен');
+  }
+  
+  console.log('📝 Регистрируем обработчики WebSocket событий...');
+  
+  // Регистрируем обработчики WebSocket событий
+  chatStore.registerEventHandler('newPost', (post) => {
+    console.log('🆕 [HomeView] Получен новый пост через WebSocket:', post);
+    posts.value = [post, ...posts.value];
+    console.log('✅ [HomeView] Пост добавлен в список. Всего постов:', posts.value.length);
+  });
+  
+  chatStore.registerEventHandler('deletePost', (postId) => {
+    console.log('🗑️ [HomeView] Пост удален через WebSocket:', postId);
+    const oldLength = posts.value.length;
+    posts.value = posts.value.filter(p => p.id !== postId);
+    console.log(`✅ [HomeView] Пост удален. Было: ${oldLength}, стало: ${posts.value.length}`);
+    favoritePosts.value = favoritePosts.value.filter(p => p.id !== postId);
+  });
+  
+  chatStore.registerEventHandler('likePost', (postId, userId) => {
+    console.log('❤️ [HomeView] Пост лайкнут через WebSocket:', postId, 'пользователем', userId);
+    if (userId === currentUser.value?.id) {
+      fetchFavorites();
+    }
+  });
+  
+  chatStore.registerEventHandler('unlikePost', (postId, userId) => {
+    console.log('💔 [HomeView] Лайк убран через WebSocket:', postId, 'пользователем', userId);
+    if (userId === currentUser.value?.id) {
+      fetchFavorites();
+    }
+  });
+  
+  console.log('✅ Все обработчики WebSocket зарегистрированы в HomeView');
+});
+
+onUnmounted(() => {
+  // Очищаем обработчики при размонтировании
+  chatStore.registerEventHandler('newPost', null);
+  chatStore.registerEventHandler('deletePost', null);
+  chatStore.registerEventHandler('likePost', null);
+  chatStore.registerEventHandler('unlikePost', null);
 });
 </script>
 

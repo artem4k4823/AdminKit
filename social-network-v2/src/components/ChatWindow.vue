@@ -54,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, watchEffect } from 'vue';
 import { useAuthStore } from '../stores/auth';
 import { useChatStore } from '../stores/chat';
 
@@ -125,9 +125,38 @@ watch(() => props.chatUser, async (newUser) => {
   }
 }, { immediate: true });
 
-watch(messages, async () => {
-  await nextTick();
-  scrollToBottom();
+// Реактивно следим за изменениями в сообщениях
+watch(
+  () => chatStore.getCurrentChatMessages,
+  async (newMessages) => {
+    console.log('🔄 Сообщения обновились, всего:', newMessages.length);
+    await nextTick();
+    scrollToBottom();
+  },
+  { deep: true, immediate: false }
+);
+
+// Дополнительный watch на изменение длины массива
+watch(
+  () => messages.value.length,
+  async (newLength, oldLength) => {
+    if (newLength > oldLength) {
+      console.log('📨 Новое сообщение! Было:', oldLength, 'Стало:', newLength);
+      await nextTick();
+      scrollToBottom();
+    }
+  }
+);
+
+// WatchEffect - автоматически отслеживает все реактивные зависимости
+watchEffect(() => {
+  const msgCount = messages.value.length;
+  if (msgCount > 0) {
+    // Используем небольшую задержку чтобы DOM успел обновиться
+    setTimeout(() => {
+      scrollToBottom();
+    }, 100);
+  }
 });
 </script>
 

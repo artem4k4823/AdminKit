@@ -13,6 +13,61 @@
             </span>
           </div>
           
+          <!-- Поиск -->
+          <div class="search-box">
+            <input 
+              v-model="searchUsername"
+              type="text"
+              placeholder="Поиск по имени..."
+              @keydown.enter="handleSearch"
+              class="search-input-small"
+            />
+            <button 
+              @click="handleSearch" 
+              :disabled="!searchUsername.trim() || searching"
+              class="btn-search-small"
+            >
+              {{ searching ? '⏳' : '🔍' }}
+            </button>
+          </div>
+          
+          <div v-if="searchError" class="error-small">
+            {{ searchError }}
+          </div>
+          
+          <div v-if="searchResult" class="search-result-box">
+            <div 
+              :class="['user-item', { active: selectedUser?.id === searchResult.id }]"
+              @click="selectUser(searchResult)"
+            >
+              <div class="user-avatar-small">{{ searchResult.username.charAt(0).toUpperCase() }}</div>
+              <div class="user-details">
+                <h4>{{ searchResult.username }}</h4>
+                <p class="user-id-small">Найден</p>
+              </div>
+            </div>
+            <div class="divider-small"></div>
+          </div>
+          
+          <!-- Активные чаты -->
+          <div v-if="activeChatsUsers.length > 0" class="active-chats-section">
+            <div class="section-label">Активные чаты ({{ activeChatsUsers.length }})</div>
+            <div 
+              v-for="user in activeChatsUsers" 
+              :key="user.id"
+              :class="['user-item', { active: selectedUser?.id === user.id }]"
+              @click="selectUser(user)"
+            >
+              <div class="user-avatar-small">{{ user.username.charAt(0).toUpperCase() }}</div>
+              <div class="user-details">
+                <h4>{{ user.username }}</h4>
+                <p class="user-id-small">ID: {{ user.id }}</p>
+              </div>
+              <span v-if="hasUnreadFrom(user.id)" class="unread-indicator">●</span>
+            </div>
+            <div class="divider-small"></div>
+          </div>
+          
           <div v-if="loadingUsers" class="loading-sidebar">
             <div class="spinner-small"></div>
             <p>Загрузка...</p>
@@ -73,6 +128,10 @@ const chatStore = useChatStore();
 const allUsers = ref([]);
 const selectedUser = ref(null);
 const loadingUsers = ref(false);
+const searchUsername = ref('');
+const searchResult = ref(null);
+const searchError = ref('');
+const searching = ref(false);
 
 const currentUser = computed(() => authStore.currentUser);
 const isConnected = computed(() => chatStore.isConnected);
@@ -80,6 +139,17 @@ const isConnected = computed(() => chatStore.isConnected);
 const otherUsers = computed(() => {
   return allUsers.value.filter(user => user.id !== currentUser.value?.id);
 });
+
+const activeChatsUsers = computed(() => {
+  const activeIds = chatStore.activeChats;
+  return allUsers.value.filter(user => 
+    activeIds.includes(user.id) && user.id !== currentUser.value?.id
+  );
+});
+
+const hasUnreadFrom = (userId) => {
+  return chatStore.unreadMessages.some(msg => msg.sender_id === userId);
+};
 
 const fetchUsers = async () => {
   loadingUsers.value = true;
@@ -104,15 +174,45 @@ const fetchUsers = async () => {
 
 const selectUser = (user) => {
   selectedUser.value = user;
+  searchResult.value = null;
+  searchUsername.value = '';
+  searchError.value = '';
 };
 
-onMounted(() => {
-  fetchUsers();
+const handleSearch = async () => {
+  if (!searchUsername.value.trim()) return;
+  
+  searching.value = true;
+  searchError.value = '';
+  searchResult.value = null;
+  
+  try {
+    const user = await api.getUserByUsername(searchUsername.value.trim());
+    
+    if (user.id === currentUser.value?.id) {
+      searchError.value = 'Это вы!';
+      return;
+    }
+    
+    searchResult.value = user;
+  } catch (err) {
+    searchError.value = 'Не найден';
+  } finally {
+    searching.value = false;
+  }
+};
+
+onMounted(async () => {
+  await fetchUsers();
   
   // Инициализируем WebSocket если ещё не подключен
   if (!chatStore.isConnected) {
-    chatStore.initWebSocket();
+    await chatStore.initWebSocket();
   }
+  
+  // Загружаем активные чаты и непрочитанные сообщения
+  await chatStore.loadActiveChats();
+  await chatStore.loadUnreadMessages();
 });
 </script>
 
@@ -165,6 +265,106 @@ onMounted(() => {
 
 .connection-status.online {
   background: rgba(74, 222, 128, 0.3);
+}
+
+.search-box {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.search-input-small {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.3s;
+}
+
+.search-input-small:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.btn-search-small {
+  padding: 0.5rem 0.875rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.btn-search-small:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.btn-search-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-small {
+  padding: 0.5rem 1.5rem;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.search-result-box {
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 100px;
+  }
+}
+
+.divider-small {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 0.5rem 0;
+}
+
+.active-chats-section {
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.section-label {
+  padding: 0.75rem 1.5rem;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.unread-indicator {
+  color: #3b82f6;
+  font-size: 1.5rem;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .loading-sidebar,

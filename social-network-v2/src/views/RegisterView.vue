@@ -69,9 +69,11 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useChatStore } from '../stores/chat';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const chatStore = useChatStore();
 
 const username = ref('');
 const password = ref('');

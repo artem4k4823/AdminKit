@@ -2,93 +2,69 @@
 
 ## ⚠️ Важно!
 
-Для полноценной работы фронтенда необходимо добавить несколько эндпоинтов в ваш FastAPI бэкенд.
+Для полноценной работы фронтенда ваш бэкенд должен иметь следующие эндпоинты.
 
-## 📝 Недостающие эндпоинты для избранного
+## ✅ Эндпоинты для избранного (уже реализованы!)
 
-Создайте или дополните файл `posts_views.py`:
+Отлично! В вашем `posts_views.py` уже есть все необходимые эндпоинты:
 
 ```python
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
-from typing import Tuple
-from app.core.models import User, Post
-from app.crud.auth import get_current_user
-
-router = APIRouter(prefix='/post', tags=['posts'])
-
-# ==================== ИЗБРАННЫЕ ПОСТЫ ====================
-
-@router.post('/add-to-favorites')
-async def add_to_favorites(
-    post_id: int,
-    deps: Tuple[User, AsyncSession] = Depends(get_current_user)
-):
-    """Добавить пост в избранное"""
+# ✅ Уже есть в вашем коде!
+@router.post('/add-favorite-post')
+async def add_favorite_post(post_id: int, deps: Tuple[User,AsyncSession] = Depends(get_current_user)):
     user, session = deps
-    
-    # Проверяем существование поста
-    post = await session.get(Post, post_id)
-    if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Пост не найден"
-        )
-    
-    # Инициализируем список если его нет
     if user.favorite_posts_ids is None:
         user.favorite_posts_ids = []
-    
-    # Добавляем если еще не добавлен
     if post_id not in user.favorite_posts_ids:
         user.favorite_posts_ids.append(post_id)
-        # Важно! Для JSONB нужно явно присвоить список
-        user.favorite_posts_ids = user.favorite_posts_ids.copy()
         await session.commit()
-    
-    return {"status": "added", "post_id": post_id}
+        return {"status": "added", "post_id": post_id}
+    return {"status": "already_added", "post_id": post_id}
 
-
-@router.delete('/remove-from-favorites')
-async def remove_from_favorites(
-    post_id: int,
-    deps: Tuple[User, AsyncSession] = Depends(get_current_user)
-):
-    """Убрать пост из избранного"""
+@router.post('/remove-favorite-post')
+async def remove_favorite_post(post_id: int, deps: Tuple[User,AsyncSession] = Depends(get_current_user)):
     user, session = deps
-    
-    if user.favorite_posts_ids and post_id in user.favorite_posts_ids:
+    if user.favorite_posts_ids is None:
+        user.favorite_posts_ids = []
+    if post_id in user.favorite_posts_ids:
         user.favorite_posts_ids.remove(post_id)
-        # Важно! Для JSONB нужно явно присвоить список
-        user.favorite_posts_ids = user.favorite_posts_ids.copy()
         await session.commit()
-    
-    return {"status": "removed", "post_id": post_id}
-
+        return {"status": "removed", "post_id": post_id}
+    return {"status": "not_found"}
 
 @router.get('/get-favorite-posts')
-async def get_favorite_posts(
-    deps: Tuple[User, AsyncSession] = Depends(get_current_user)
-):
-    """Получить все избранные посты пользователя"""
+async def get_favorite_posts(deps: Tuple[User, AsyncSession] = Depends(get_current_user)):
     user, session = deps
-    
     if not user.favorite_posts_ids:
         return []
-    
-    # Получаем посты по ID
     result = await session.execute(
         select(Post).where(Post.id.in_(user.favorite_posts_ids))
     )
     posts = result.scalars().all()
-    
     return posts
 ```
 
+## 📝 Небольшое исправление
+
+В вашем коде есть опечатка - вторая функция называется `add_favorite_post`, но должна быть `remove_favorite_post`:
+
+```python
+# БЫЛО (с ошибкой):
+@router.post('/remove-favorite-post')
+async def add_favorite_post(post_id: int, ...):  # ❌ Неправильное имя функции
+    ...
+
+# ДОЛЖНО БЫТЬ:
+@router.post('/remove-favorite-post')
+async def remove_favorite_post(post_id: int, ...):  # ✅ Правильное имя
+    ...
+```
+
+Это не критично (Python использует имя из декоратора), но для чистоты кода лучше исправить.
+
 ## 🗄️ Обновление модели User
 
-Убедитесь, что в вашей модели `User` (файл `users.py`) есть поле `favorite_posts_ids`:
+Убедитесь, что в вашей модели `User` (файл `users.py`) есть поля `favorite_posts_ids` и `chats`:
 
 ```python
 from sqlalchemy.orm import mapped_column, Mapped
@@ -105,8 +81,15 @@ class User(Base):
     status: Mapped[bool] = mapped_column(default=True)
     isAdmin: Mapped[bool] = mapped_column(default=False)
     
-    # ВАЖНО! Это поле для избранных постов
+    # Избранные посты
     favorite_posts_ids: Mapped[Optional[List[int]]] = mapped_column(
+        MutableList.as_mutable(JSONB),
+        default=list,
+        nullable=True
+    )
+    
+    # НОВОЕ! Активные чаты (ID пользователей)
+    chats: Mapped[Optional[List[int]]] = mapped_column(
         MutableList.as_mutable(JSONB),
         default=list,
         nullable=True
@@ -193,24 +176,30 @@ app.add_middleware(
 
 ## ✅ Чек-лист перед запуском
 
-- [ ] Добавлено поле `favorite_posts_ids` в модель User
-- [ ] Создана и применена миграция БД
-- [ ] Добавлены эндпоинты для избранного:
-  - [ ] `POST /post/add-to-favorites`
-  - [ ] `DELETE /post/remove-from-favorites`
-  - [ ] `GET /post/get-favorite-posts`
-- [ ] WebSocket эндпоинт работает: `ws://localhost:8000/chat/ws/{user_id}`
-- [ ] CORS настроен правильно
-- [ ] Эндпоинты чата работают:
-  - [ ] `POST /chat/send-message`
-  - [ ] `GET /chat/history/{user1_id}/{user2_id}/`
-- [ ] Существующие эндпоинты работают:
-  - [ ] `POST /log/token-login`
-  - [ ] `GET /log/me`
-  - [ ] `GET /post/get_all_posts`
-  - [ ] `POST /post/create_post`
-  - [ ] `DELETE /post/delete-post`
-  - [ ] `GET /user/get_all_users`
+- [x] Добавлено поле `favorite_posts_ids` в модель User
+- [x] Добавлено поле `chats` в модель User (для активных чатов)
+- [x] Создана и применена миграция БД
+- [x] Добавлены эндпоинты для избранного:
+  - [x] `POST /post/add-favorite-post?post_id={id}`
+  - [x] `POST /post/remove-favorite-post?post_id={id}`
+  - [x] `GET /post/get-favorite-posts`
+- [x] WebSocket эндпоинт работает: `ws://localhost:8000/chat/ws/{user_id}`
+- [x] CORS настроен правильно
+- [x] Эндпоинты чата работают:
+  - [x] `POST /chat/send-message`
+  - [x] `GET /chat/history/{user1_id}/{user2_id}/`
+  - [x] `PUT /chat/messages/{message_id}/read/`
+  - [x] `GET /chat/unread/me/` - непрочитанные сообщения
+  - [x] `GET /chat/all-your-chats` - активные чаты
+- [x] Существующие эндпоинты работают:
+  - [x] `POST /log/token-login`
+  - [x] `GET /log/me`
+  - [x] `GET /post/get_all_posts`
+  - [x] `POST /post/create_post`
+  - [x] `DELETE /post/delete-post`
+  - [x] `GET /user/get_all_users` (только для админов)
+  - [x] `GET /user/get_user_by_username` (для всех)
+  - [x] `GET /user/get_user_by_id` (для всех)
 
 ## 🧪 Тестирование
 

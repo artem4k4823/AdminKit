@@ -70,7 +70,16 @@ const handleLogin = async () => {
   
   try {
     await authStore.login(username.value, password.value);
+    
+    console.log('✅ Вход выполнен, инициализируем WebSocket...');
+    
+    // Инициализируем WebSocket и загружаем данные чата
     await chatStore.initWebSocket();
+    await chatStore.loadActiveChats();
+    await chatStore.loadUnreadMessages();
+    
+    console.log('✅ WebSocket инициализирован');
+    
     router.push('/home');
   } catch (err) {
     error.value = err.response?.data?.detail || 'Ошибка входа';

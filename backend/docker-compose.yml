@@ -1,5 +1,7 @@
 services:
     app:
+      build: 
+        dockerfile: ./Dockerfile
       image: nginx
       environment:
         DATABASE_URL: postgresql+asyncpg://username:password@database:5432/shop

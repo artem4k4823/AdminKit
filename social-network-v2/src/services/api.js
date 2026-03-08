@@ -72,6 +72,11 @@ export default {
     return response.data;
   },
 
+  async getUserByUsername(username) {
+    const response = await api.get(`/user/get_user_by_username?username=${username}`);
+    return response.data;
+  },
+
   async deleteUser(userId) {
     const response = await api.delete(`/user/delete_user?user_id=${userId}`);
     return response.data;
@@ -98,12 +103,12 @@ export default {
 
   // ==================== ИЗБРАННЫЕ ПОСТЫ ====================
   async addToFavorites(postId) {
-    const response = await api.post(`/post/add-to-favorites?post_id=${postId}`);
+    const response = await api.post(`/post/add-favorite-post?post_id=${postId}`);
     return response.data;
   },
 
   async removeFromFavorites(postId) {
-    const response = await api.delete(`/post/remove-from-favorites?post_id=${postId}`);
+    const response = await api.post(`/post/remove-favorite-post?post_id=${postId}`);
     return response.data;
   },
 
@@ -131,10 +136,25 @@ export default {
     return response.data;
   },
 
+  // ==================== НОВЫЕ ЭНДПОИНТЫ ====================
+  
+  async getUnreadMessages() {
+    const response = await api.get('/chat/unread/me/');
+    return response.data;
+  },
+
+  async getAllMyChats() {
+    const response = await api.get('/chat/all-your-chats');
+    return response.data;
+  },
+
   // ==================== WEBSOCKET ====================
   createWebSocket(userId) {
+    // WebSocket должен подключаться напрямую к бэкенду, а не через Vite proxy
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.host;
-    return new WebSocket(`${wsProtocol}//${wsHost}/ws/chat/ws/${userId}`);
+    // Используем localhost:8000 для WebSocket (бэкенд)
+    const wsUrl = `${wsProtocol}//localhost:8000/chat/ws/${userId}`;
+    console.log('🔌 Создаем WebSocket соединение:', wsUrl);
+    return new WebSocket(wsUrl);
   }
 };

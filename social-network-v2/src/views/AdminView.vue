@@ -131,13 +131,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, onUnmounted } from 'vue';
 import { useAuthStore } from '../stores/auth';
+import { useChatStore } from '../stores/chat';
 import api from '../services/api';
 import Navbar from '../components/Navbar.vue';
 import PostCard from '../components/PostCard.vue';
 
 const authStore = useAuthStore();
+const chatStore = useChatStore();
 
 const activeTab = ref('posts');
 const posts = ref([]);
@@ -187,6 +189,8 @@ const handleDeletePost = async (postId) => {
   try {
     await api.deletePost(postId);
     await fetchPosts();
+    
+    chatStore.broadcastEvent('delete_post', { post_id: postId });
   } catch (err) {
     alert(err.response?.data?.detail || 'Ошибка удаления поста');
   } finally {
@@ -204,6 +208,8 @@ const handleDeleteUser = async (userId) => {
   try {
     await api.deleteUser(userId);
     await fetchUsers();
+    
+    chatStore.broadcastEvent('delete_user', { user_id: userId });
   } catch (err) {
     alert(err.response?.data?.detail || 'Ошибка удаления пользователя');
   } finally {
@@ -214,6 +220,30 @@ const handleDeleteUser = async (userId) => {
 onMounted(() => {
   fetchPosts();
   fetchUsers();
+  
+  // Real-time обновления для админа
+  chatStore.registerEventHandler('newPost', (post) => {
+    posts.value = [post, ...posts.value];
+  });
+  
+  chatStore.registerEventHandler('deletePost', (postId) => {
+    posts.value = posts.value.filter(p => p.id !== postId);
+  });
+  
+  chatStore.registerEventHandler('newUser', (user) => {
+    users.value = [...users.value, user];
+  });
+  
+  chatStore.registerEventHandler('deleteUser', (userId) => {
+    users.value = users.value.filter(u => u.id !== userId);
+  });
+});
+
+onUnmounted(() => {
+  chatStore.registerEventHandler('newPost', null);
+  chatStore.registerEventHandler('deletePost', null);
+  chatStore.registerEventHandler('newUser', null);
+  chatStore.registerEventHandler('deleteUser', null);
 });
 </script>
 
