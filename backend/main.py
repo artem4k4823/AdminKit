@@ -9,6 +9,7 @@ import uvicorn
 
 from app.core.models.admin import UserAdmin
 from app.core.models.admin import PostAdmin
+from app.core.models.admin import MessageAdmin
 
 from app.api_v1.user_operation_views import router as user_router
 from app.api_v1.auth_veiws import router as OAuth_jwt_router
@@ -32,6 +33,7 @@ app.include_router(chat_router)
 
 admin.add_view(UserAdmin)
 admin.add_view(PostAdmin)
+admin.add_view(MessageAdmin)
 
 authentication_backend = AdminAuth(secret_key=settings.SECRET_KEY)
 
