@@ -6,7 +6,15 @@
       <!-- Профиль пользователя -->
       <div class="profile-card">
         <div class="profile-header">
-          <div class="avatar">{{ currentUser?.username?.charAt(0).toUpperCase() }}</div>
+          <div class="avatar">
+            <img 
+              v-if="currentUser?.avatar" 
+              :src="currentUser.avatar" 
+              :alt="currentUser.username"
+              class="avatar-img"
+            />
+            <span v-else>{{ currentUser?.username?.charAt(0).toUpperCase() }}</span>
+          </div>
           <div class="profile-info">
             <h1>{{ currentUser?.username }}</h1>
             <div class="profile-stats">
@@ -100,7 +108,15 @@
           
           <div v-if="searchResult" class="search-result">
             <div class="user-card" @click="openChat(searchResult)">
-              <div class="user-avatar">{{ searchResult.username.charAt(0).toUpperCase() }}</div>
+              <div class="user-avatar">
+                <img 
+                  v-if="searchResult.avatar" 
+                  :src="searchResult.avatar" 
+                  :alt="searchResult.username"
+                  class="avatar-img"
+                />
+                <span v-else>{{ searchResult.username.charAt(0).toUpperCase() }}</span>
+              </div>
               <div class="user-info">
                 <h3>{{ searchResult.username }}</h3>
                 <p class="user-id">ID: {{ searchResult.id }}</p>
@@ -139,7 +155,15 @@
             class="user-card"
             @click="openChat(user)"
           >
-            <div class="user-avatar">{{ user.username.charAt(0).toUpperCase() }}</div>
+            <div class="user-avatar">
+              <img 
+                v-if="user.avatar" 
+                :src="user.avatar" 
+                :alt="user.username"
+                class="avatar-img"
+              />
+              <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
+            </div>
             <div class="user-info">
               <h3>{{ user.username }}</h3>
               <p class="user-id">ID: {{ user.id }}</p>
@@ -293,6 +317,13 @@ onMounted(() => {
   font-size: 3rem;
   font-weight: bold;
   border: 4px solid white;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profile-info h1 {
@@ -547,6 +578,8 @@ onMounted(() => {
   justify-content: center;
   font-size: 1.5rem;
   font-weight: bold;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .user-info {

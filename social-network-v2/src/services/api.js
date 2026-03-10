@@ -39,7 +39,7 @@ export default {
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
-    
+
     const response = await api.post('/log/token-login', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
@@ -54,10 +54,18 @@ export default {
   },
 
   // ==================== ПОЛЬЗОВАТЕЛИ ====================
-  async registerUser(username, password) {
-    const response = await api.post('/user/create_user', {
-      username,
-      password
+  async registerUser(username, password, avatarFile = null) {
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
+    if (avatarFile) {
+      formData.append('avatar', avatarFile);
+    }
+
+    const response = await api.post('/user/create_user', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
     });
     return response.data;
   },
@@ -137,7 +145,7 @@ export default {
   },
 
   // ==================== НОВЫЕ ЭНДПОИНТЫ ====================
-  
+
   async getUnreadMessages() {
     const response = await api.get('/chat/unread/me/');
     return response.data;

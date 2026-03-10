@@ -20,12 +20,12 @@ export const useAuthStore = defineStore('auth', {
     async login(username, password) {
       this.loading = true;
       this.error = null;
-      
+
       try {
         const data = await api.login(username, password);
         this.token = data.access_token.access_token;
         localStorage.setItem('access_token', this.token);
-        
+
         await this.fetchUser();
         return true;
       } catch (error) {
@@ -36,12 +36,12 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register(username, password) {
+    async register(username, password, avatarFile = null) {
       this.loading = true;
       this.error = null;
-      
+
       try {
-        await api.registerUser(username, password);
+        await api.registerUser(username, password, avatarFile);
         return true;
       } catch (error) {
         this.error = error.response?.data?.detail || 'Ошибка регистрации';

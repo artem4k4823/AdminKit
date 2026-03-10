@@ -102,7 +102,15 @@
                 <td><strong>{{ user.id }}</strong></td>
                 <td>
                   <div class="user-cell">
-                    <div class="user-avatar-tiny">{{ user.username.charAt(0).toUpperCase() }}</div>
+                    <div class="user-avatar-tiny">
+                      <img 
+                        v-if="user.avatar" 
+                        :src="user.avatar" 
+                        :alt="user.username"
+                        class="avatar-img"
+                      />
+                      <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
+                    </div>
                     {{ user.username }}
                   </div>
                 </td>
@@ -468,6 +476,15 @@ tbody tr:hover {
   justify-content: center;
   font-weight: bold;
   font-size: 0.875rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar-tiny .avatar-img,
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .status-badge {

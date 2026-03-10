@@ -1,8 +1,17 @@
+
 <template>
   <div class="chat-window">
     <div class="chat-header">
       <div class="chat-user-info">
-        <div class="avatar">{{ chatUser?.username?.charAt(0).toUpperCase() }}</div>
+        <div class="avatar">
+            <img 
+              v-if="chatUser?.avatar" 
+              :src="chatUser.avatar" 
+              :alt="chatUser.username"
+              class="avatar-img"
+            />
+            <span v-else>{{ chatUser?.username?.charAt(0).toUpperCase() }}</span>
+          </div>
         <div>
           <h3>{{ chatUser?.username }}</h3>
           <span :class="['status', { online: isOnline }]">
@@ -196,6 +205,13 @@ watchEffect(() => {
   justify-content: center;
   font-size: 1.5rem;
   font-weight: bold;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .chat-user-info h3 {

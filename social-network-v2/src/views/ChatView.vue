@@ -40,7 +40,15 @@
               :class="['user-item', { active: selectedUser?.id === searchResult.id }]"
               @click="selectUser(searchResult)"
             >
-              <div class="user-avatar-small">{{ searchResult.username.charAt(0).toUpperCase() }}</div>
+              <div class="user-avatar-small">
+                <img 
+                  v-if="searchResult.avatar" 
+                  :src="searchResult.avatar" 
+                  :alt="searchResult.username"
+                  class="avatar-img"
+                />
+                <span v-else>{{ searchResult.username.charAt(0).toUpperCase() }}</span>
+              </div>
               <div class="user-details">
                 <h4>{{ searchResult.username }}</h4>
                 <p class="user-id-small">Найден</p>
@@ -58,7 +66,15 @@
               :class="['user-item', { active: selectedUser?.id === user.id }]"
               @click="selectUser(user)"
             >
-              <div class="user-avatar-small">{{ user.username.charAt(0).toUpperCase() }}</div>
+              <div class="user-avatar-small">
+                <img 
+                  v-if="user.avatar" 
+                  :src="user.avatar" 
+                  :alt="user.username"
+                  class="avatar-img"
+                />
+                <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
+              </div>
               <div class="user-details">
                 <h4>{{ user.username }}</h4>
                 <p class="user-id-small">ID: {{ user.id }}</p>
@@ -84,7 +100,15 @@
               :class="['user-item', { active: selectedUser?.id === user.id }]"
               @click="selectUser(user)"
             >
-              <div class="user-avatar-small">{{ user.username.charAt(0).toUpperCase() }}</div>
+              <div class="user-avatar-small">
+                <img 
+                  v-if="user.avatar" 
+                  :src="user.avatar" 
+                  :alt="user.username"
+                  class="avatar-img"
+                />
+                <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
+              </div>
               <div class="user-details">
                 <h4>{{ user.username }}</h4>
                 <p class="user-id-small">ID: {{ user.id }}</p>
@@ -427,6 +451,14 @@ onMounted(async () => {
   justify-content: center;
   font-weight: bold;
   font-size: 1.125rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar-small .avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .user-details {

@@ -41,6 +41,34 @@
           />
         </div>
         
+        <div class="form-group">
+          <label>Аватар (необязательно)</label>
+          <div class="avatar-upload-container">
+            <div class="avatar-preview" @click="triggerFileInput">
+              <img v-if="avatarPreview" :src="avatarPreview" alt="Avatar preview" />
+              <span v-else class="avatar-placeholder">📸</span>
+            </div>
+            <input 
+              ref="fileInput"
+              type="file" 
+              accept="image/*" 
+              @change="handleAvatarChange" 
+              class="hidden-file-input"
+            />
+            <button type="button" class="btn-secondary" @click="triggerFileInput">
+              Выбрать фото
+            </button>
+            <button 
+              v-if="avatarFile" 
+              type="button" 
+              class="btn-text-danger" 
+              @click="clearAvatar"
+            >
+              Удалить
+            </button>
+          </div>
+        </div>
+        
         <div v-if="error" class="error-message">
           {{ error }}
         </div>
@@ -78,9 +106,44 @@ const chatStore = useChatStore();
 const username = ref('');
 const password = ref('');
 const confirmPassword = ref('');
+const avatarFile = ref(null);
+const avatarPreview = ref(null);
+const fileInput = ref(null);
 const error = ref('');
 const success = ref('');
 const loading = ref(false);
+
+const triggerFileInput = () => {
+  fileInput.value.click();
+};
+
+const handleAvatarChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      error.value = 'Размер файла не должен превышать 5МБ';
+      return;
+    }
+    
+    avatarFile.value = file;
+    
+    // Создаем превью
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      avatarPreview.value = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    error.value = '';
+  }
+};
+
+const clearAvatar = () => {
+  avatarFile.value = null;
+  avatarPreview.value = null;
+  if (fileInput.value) {
+    fileInput.value.value = '';
+  }
+};
 
 const handleRegister = async () => {
   error.value = '';
@@ -99,7 +162,7 @@ const handleRegister = async () => {
   loading.value = true;
   
   try {
-    await authStore.register(username.value, password.value);
+    await authStore.register(username.value, password.value, avatarFile.value);
     success.value = 'Регистрация успешна! Перенаправление на страницу входа...';
     
     setTimeout(() => {
@@ -178,6 +241,79 @@ const handleRegister = async () => {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.avatar-upload-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.avatar-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.avatar-preview:hover {
+  border-color: #667eea;
+  background: #eef2ff;
+}
+
+.avatar-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  font-size: 1.5rem;
+  color: #9ca3af;
+}
+
+.hidden-file-input {
+  display: none;
+}
+
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  background: white;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.btn-text-danger {
+  padding: 0.5rem;
+  background: transparent;
+  color: #ef4444;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn-text-danger:hover {
+  text-decoration: underline;
 }
 
 .error-message {

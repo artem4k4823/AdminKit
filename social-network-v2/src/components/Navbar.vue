@@ -28,6 +28,16 @@
         </router-link>
         
         <div class="navbar-user">
+          <div class="nav-avatar">
+            <img 
+              v-if="currentUser?.avatar" 
+              :src="currentUser.avatar" 
+              :alt="currentUser.username"
+              class="nav-avatar-img"
+              @error="onNavAvatarError"
+            />
+            <span v-else class="nav-avatar-letter">{{ currentUser?.username?.charAt(0).toUpperCase() }}</span>
+          </div>
           <span class="username">{{ currentUser?.username }}</span>
           <button @click="handleLogout" class="btn-logout">Выйти</button>
         </div>
@@ -55,6 +65,11 @@ const handleLogout = () => {
   chatStore.closeWebSocket();
   authStore.logout();
   router.push('/login');
+};
+
+const onNavAvatarError = (e) => {
+  e.target.style.display = 'none';
+  e.target.nextElementSibling && (e.target.nextElementSibling.style.display = 'flex');
 };
 </script>
 
@@ -138,6 +153,31 @@ const handleLogout = () => {
   margin-left: 1rem;
   padding-left: 1rem;
   border-left: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.nav-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.nav-avatar-letter {
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
 }
 
 .username {

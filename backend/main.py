@@ -3,7 +3,6 @@ from sqladmin import Admin
 from app.core.database import db
 from app.core.admin_auth import AdminAuth
 from app.core.config import settings
-
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -15,8 +14,10 @@ from app.api_v1.user_operation_views import router as user_router
 from app.api_v1.auth_veiws import router as OAuth_jwt_router
 from app.api_v1.posts_veiws import router as posts_router
 from app.api_v1.chat_veiws import router as chat_router
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 admin = Admin(app, engine=db.engine, authentication_backend = AdminAuth(secret_key=settings.SECRET_KEY))
 
 app.add_middleware(
