@@ -7,13 +7,13 @@
             <img 
               v-if="chatUser?.avatar" 
               :src="chatUser.avatar" 
-              :alt="chatUser.username"
+              :alt="chatUser?.displayName || chatUser?.username"
               class="avatar-img"
             />
-            <span v-else>{{ chatUser?.username?.charAt(0).toUpperCase() }}</span>
+            <span v-else>{{ (chatUser?.displayName || chatUser?.username)?.charAt(0).toUpperCase() }}</span>
           </div>
         <div>
-          <h3>{{ chatUser?.username }}</h3>
+          <h3>{{ chatUser?.displayName || chatUser?.username }}</h3>
           <span :class="['status', { online: isOnline }]">
             {{ isOnline ? 'В сети' : 'Не в сети' }}
           </span>

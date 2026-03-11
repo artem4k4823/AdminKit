@@ -32,13 +32,13 @@
             <img 
               v-if="currentUser?.avatar" 
               :src="currentUser.avatar" 
-              :alt="currentUser.username"
+              :alt="currentUser?.displayName || currentUser?.username"
               class="nav-avatar-img"
               @error="onNavAvatarError"
             />
-            <span v-else class="nav-avatar-letter">{{ currentUser?.username?.charAt(0).toUpperCase() }}</span>
+            <span v-else class="nav-avatar-letter">{{ (currentUser?.displayName || currentUser?.username)?.charAt(0).toUpperCase() }}</span>
           </div>
-          <span class="username">{{ currentUser?.username }}</span>
+          <span class="username">{{ currentUser?.displayName || currentUser?.username }}</span>
           <button @click="handleLogout" class="btn-logout">Выйти</button>
         </div>
       </div>

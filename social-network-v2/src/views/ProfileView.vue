@@ -15,8 +15,9 @@
             />
             <span v-else>{{ currentUser?.username?.charAt(0).toUpperCase() }}</span>
           </div>
-          <div class="profile-info">
-            <h1>{{ currentUser?.username }}</h1>
+          <div class="profile-info" v-if="!isEditingProfile">
+            <h1>{{ currentUser?.displayName || currentUser?.username }}</h1>
+            <p class="username-tag">@{{ currentUser?.username }}</p>
             <div class="profile-stats">
               <div class="stat">
                 <span class="stat-value">{{ currentUser?.id }}</span>
@@ -31,6 +32,32 @@
                 <span class="stat-label">Статус</span>
               </div>
             </div>
+            <button @click="startEditProfile" class="btn-edit">⚙️ Редактировать профиль</button>
+          </div>
+          
+          <div class="profile-edit-form" v-else>
+            <h2>Настройки профиля</h2>
+            <form @submit.prevent="handleUpdateProfile">
+              <div class="form-group">
+                <label>Отображаемое имя</label>
+                <input v-model="editForm.displayName" type="text" placeholder="Отображаемое имя" />
+              </div>
+              <div class="form-group">
+                <label>Логин (@username)</label>
+                <input v-model="editForm.username" type="text" placeholder="Логин" />
+              </div>
+              <div class="form-group">
+                <label>Аватар</label>
+                <input type="file" @change="handleAvatarUpload" accept="image/*" class="file-input" />
+              </div>
+              <div v-if="updateError" class="error-message">{{ updateError }}</div>
+              <div class="edit-actions">
+                <button type="submit" class="btn-save" :disabled="updatingProfile">
+                  {{ updatingProfile ? '⏳ Сохранение...' : '💾 Сохранить' }}
+                </button>
+                <button type="button" @click="cancelEdit" class="btn-cancel">❌ Отмена</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -159,13 +186,13 @@
               <img 
                 v-if="user.avatar" 
                 :src="user.avatar" 
-                :alt="user.username"
+                :alt="user.displayName || user.username"
                 class="avatar-img"
               />
-              <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
+              <span v-else>{{ (user.displayName || user.username)?.charAt(0).toUpperCase() }}</span>
             </div>
             <div class="user-info">
-              <h3>{{ user.username }}</h3>
+              <h3>{{ user.displayName || user.username }}</h3>
               <p class="user-id">ID: {{ user.id }}</p>
             </div>
             <button class="btn-chat">
@@ -203,6 +230,11 @@ const searchUsername = ref('');
 const searchResult = ref(null);
 const searchError = ref('');
 const searching = ref(false);
+
+const isEditingProfile = ref(false);
+const updatingProfile = ref(false);
+const updateError = ref('');
+const editForm = ref({ username: '', displayName: '', avatar: null });
 
 const currentUser = computed(() => authStore.currentUser);
 
@@ -278,6 +310,49 @@ const handleSearch = async () => {
   }
 };
 
+const startEditProfile = () => {
+  editForm.value = {
+    username: currentUser.value?.username || '',
+    displayName: currentUser.value?.displayName || currentUser.value?.username || '',
+    avatar: null
+  };
+  updateError.value = '';
+  isEditingProfile.value = true;
+};
+
+const cancelEdit = () => {
+  isEditingProfile.value = false;
+};
+
+const handleAvatarUpload = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    if (file.size > 5 * 1024 * 1024) {
+      updateError.value = 'Размер файла не должен превышать 5МБ';
+      return;
+    }
+    editForm.value.avatar = file;
+  }
+};
+
+const handleUpdateProfile = async () => {
+  updatingProfile.value = true;
+  updateError.value = '';
+  
+  try {
+    await authStore.updateProfile(
+      editForm.value.username !== currentUser.value?.username ? editForm.value.username : null,
+      editForm.value.displayName !== currentUser.value?.displayName ? editForm.value.displayName : null,
+      editForm.value.avatar
+    );
+    isEditingProfile.value = false;
+  } catch (err) {
+    updateError.value = err.response?.data?.detail || 'Ошибка сохранения профиля';
+  } finally {
+    updatingProfile.value = false;
+  }
+};
+
 onMounted(() => {
   fetchFavoritePosts();
   fetchUsers();
@@ -328,12 +403,101 @@ onMounted(() => {
 
 .profile-info h1 {
   font-size: 2.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.username-tag {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1.125rem;
   margin-bottom: 1rem;
 }
 
 .profile-stats {
   display: flex;
   gap: 3rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn-edit {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-edit:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.profile-edit-form {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.profile-edit-form h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.profile-edit-form .form-group {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-edit-form label {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.profile-edit-form input[type="text"] {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.9);
+  color: #111827;
+}
+
+.profile-edit-form .file-input {
+  color: white;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn-save {
+  background: white;
+  color: #667eea;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-save:disabled {
+  opacity: 0.7;
+}
+
+.btn-cancel {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .stat {

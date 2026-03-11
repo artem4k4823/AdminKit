@@ -1,9 +1,15 @@
 <template>
   <div class="post-card">
     <div class="post-header">
-      <div>
-        <h3 class="post-title">{{ post.title }}</h3>
-        <span class="post-author">@{{ post.user }}</span>
+      <div class="author-info">
+        <div class="avatar-small">
+          <img v-if="post.user_avatar" :src="post.user_avatar" class="avatar-img" />
+          <span v-else>{{ (post.user_display_name || post.user)?.charAt(0).toUpperCase() }}</span>
+        </div>
+        <div>
+          <h3 class="post-title">{{ post.title }}</h3>
+          <span class="post-author">{{ post.user_display_name || post.user }} <small>@{{ post.user }}</small></span>
+        </div>
       </div>
       <div class="post-actions">
         <button 
@@ -94,10 +100,43 @@ defineEmits(['delete', 'toggleLike']);
   margin: 0 0 0.5rem 0;
 }
 
+.author-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avatar-small {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.875rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-small .avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .post-author {
   color: #6b7280;
   font-size: 0.875rem;
   font-weight: 500;
+  display: flex;
+  flex-direction: column;
+}
+
+.post-author small {
+  opacity: 0.7;
 }
 
 .post-actions {

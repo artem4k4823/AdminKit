@@ -70,13 +70,13 @@
                 <img 
                   v-if="user.avatar" 
                   :src="user.avatar" 
-                  :alt="user.username"
+                  :alt="user.displayName || user.username"
                   class="avatar-img"
                 />
-                <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
+                <span v-else>{{ (user.displayName || user.username)?.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="user-details">
-                <h4>{{ user.username }}</h4>
+                <h4>{{ user.displayName || user.username }}</h4>
                 <p class="user-id-small">ID: {{ user.id }}</p>
               </div>
               <span v-if="hasUnreadFrom(user.id)" class="unread-indicator">●</span>
@@ -104,13 +104,13 @@
                 <img 
                   v-if="user.avatar" 
                   :src="user.avatar" 
-                  :alt="user.username"
+                  :alt="user.displayName || user.username"
                   class="avatar-img"
                 />
-                <span v-else>{{ user.username.charAt(0).toUpperCase() }}</span>
+                <span v-else>{{ (user.displayName || user.username)?.charAt(0).toUpperCase() }}</span>
               </div>
               <div class="user-details">
-                <h4>{{ user.username }}</h4>
+                <h4>{{ user.displayName || user.username }}</h4>
                 <p class="user-id-small">ID: {{ user.id }}</p>
               </div>
             </div>

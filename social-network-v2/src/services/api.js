@@ -54,9 +54,10 @@ export default {
   },
 
   // ==================== ПОЛЬЗОВАТЕЛИ ====================
-  async registerUser(username, password, avatarFile = null) {
+  async registerUser(username, displayName, password, avatarFile = null) {
     const formData = new FormData();
     formData.append('username', username);
+    formData.append('displayName', displayName);
     formData.append('password', password);
     if (avatarFile) {
       formData.append('avatar', avatarFile);
@@ -72,6 +73,20 @@ export default {
 
   async getAllUsers() {
     const response = await api.get('/user/get_all_users');
+    return response.data;
+  },
+
+  async updateProfile(username, displayName, avatarFile = null) {
+    const formData = new FormData();
+    if (username) formData.append('username', username);
+    if (displayName) formData.append('displayName', displayName);
+    if (avatarFile) formData.append('avatar', avatarFile);
+
+    const response = await api.patch('/log/me/settings', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
   },
 

@@ -36,12 +36,12 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async register(username, password, avatarFile = null) {
+    async register(username, displayName, password, avatarFile = null) {
       this.loading = true;
       this.error = null;
 
       try {
-        await api.registerUser(username, password, avatarFile);
+        await api.registerUser(username, displayName, password, avatarFile);
         return true;
       } catch (error) {
         this.error = error.response?.data?.detail || 'Ошибка регистрации';
@@ -57,6 +57,21 @@ export const useAuthStore = defineStore('auth', {
       } catch (error) {
         console.error('Ошибка получения данных пользователя:', error);
         this.logout();
+      }
+    },
+
+    async updateProfile(username, displayName, avatarFile = null) {
+      this.loading = true;
+      this.error = null;
+      try {
+        await api.updateProfile(username, displayName, avatarFile);
+        await this.fetchUser();
+        return true;
+      } catch (error) {
+        this.error = error.response?.data?.detail || 'Ошибка обновления профиля';
+        throw error;
+      } finally {
+        this.loading = false;
       }
     },
 

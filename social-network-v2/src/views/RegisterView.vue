@@ -8,13 +8,24 @@
       
       <form @submit.prevent="handleRegister" class="auth-form">
         <div class="form-group">
-          <label for="username">Имя пользователя</label>
+          <label for="username">Логин (Уникальный)</label>
           <input 
             id="username"
             v-model="username" 
             type="text" 
             required
-            placeholder="Введите имя пользователя"
+            placeholder="Введите логин"
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="displayName">Отображаемое имя</label>
+          <input 
+            id="displayName"
+            v-model="displayName" 
+            type="text" 
+            required
+            placeholder="Как вас будут видеть"
           />
         </div>
         
@@ -104,6 +115,7 @@ const authStore = useAuthStore();
 const chatStore = useChatStore();
 
 const username = ref('');
+const displayName = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const avatarFile = ref(null);
@@ -162,7 +174,7 @@ const handleRegister = async () => {
   loading.value = true;
   
   try {
-    await authStore.register(username.value, password.value, avatarFile.value);
+    await authStore.register(username.value, displayName.value, password.value, avatarFile.value);
     success.value = 'Регистрация успешна! Перенаправление на страницу входа...';
     
     setTimeout(() => {
