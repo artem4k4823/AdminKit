@@ -1,0 +1,50 @@
+networks:
+  dev:
+
+
+services:
+  app:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://username:password@database:5432/shop
+
+  database:
+    image: postgres
+    environment:
+      POSTGRES_DB: shop
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    command: [ "postgres", "-c", "listen_addresses=*" ]
+    networks:
+      - dev
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+
+  frontend:
+    build:
+      context: ./social-network-v2
+      dockerfile: ./Dockerfile
+    networks:
+      - dev
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - './nginx.conf:/etc/nginx/nginx.conf'
+    depends_on:
+      - app
+    networks:
+      - dev
