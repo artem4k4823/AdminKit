@@ -124,6 +124,19 @@ export default {
     return response.data;
   },
 
+  // ==================== КОММЕНТАРИИ ====================
+  async getComments(postId) {
+    const response = await api.get(`/${postId}/comment/get_all_comments`);
+    return response.data;
+  },
+
+  async createComment(postId, content) {
+    const response = await api.post(`/${postId}/comment/create`, {
+      content
+    });
+    return response.data;
+  },
+
   // ==================== ИЗБРАННЫЕ ПОСТЫ ====================
   async addToFavorites(postId) {
     const response = await api.post(`/post/add-favorite-post?post_id=${postId}`);

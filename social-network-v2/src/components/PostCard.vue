@@ -20,6 +20,13 @@
         >
           <span class="heart">{{ isLiked ? '❤️' : '🤍' }}</span>
         </button>
+        <button 
+          @click="toggleComments" 
+          class="btn-comment"
+          title="Комментарии"
+        >
+          <span class="icon">💬</span>
+        </button>
       </div>
     </div>
     
@@ -37,13 +44,42 @@
         {{ deleting ? 'Удаление...' : 'Удалить' }}
       </button>
     </div>
+
+    <!-- Комментарии -->
+    <div v-if="showComments" class="comments-section">
+      <h4>Комментарии</h4>
+      
+      <div v-if="loadingComments" class="loading-text">Загрузка...</div>
+      
+      <div v-else class="comments-list">
+        <div v-if="comments.length === 0" class="no-comments">Пока нет комментариев.</div>
+        <div v-for="comment in comments" :key="comment.id" class="comment-item">
+          <strong>{{ comment.user }}</strong>: <span>{{ comment.content }}</span>
+        </div>
+      </div>
+      
+      <form @submit.prevent="handleCreateComment" class="comment-form">
+        <input 
+          v-model="newCommentText" 
+          type="text" 
+          placeholder="Написать комментарий..."
+          :disabled="submittingComment"
+          required
+        />
+        <button type="submit" :disabled="submittingComment || !newCommentText.trim()" class="btn-submit-comment">
+          Отправить
+        </button>
+      </form>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { defineProps, defineEmits } from 'vue';
+import { ref, defineProps, defineEmits } from 'vue';
+import api from '../services/api';
 
-defineProps({
+const props = defineProps({
   post: {
     type: Object,
     required: true
@@ -67,6 +103,44 @@ defineProps({
 });
 
 defineEmits(['delete', 'toggleLike']);
+
+const showComments = ref(false);
+const comments = ref([]);
+const loadingComments = ref(false);
+const newCommentText = ref('');
+const submittingComment = ref(false);
+
+const toggleComments = async () => {
+  showComments.value = !showComments.value;
+  if (showComments.value && comments.value.length === 0) {
+    await fetchComments();
+  }
+};
+
+const fetchComments = async () => {
+  loadingComments.value = true;
+  try {
+    comments.value = await api.getComments(props.post.id);
+  } catch (err) {
+    console.error('Ошибка загрузки комментариев:', err);
+  } finally {
+    loadingComments.value = false;
+  }
+};
+
+const handleCreateComment = async () => {
+  if (!newCommentText.value.trim()) return;
+  submittingComment.value = true;
+  try {
+    const newComment = await api.createComment(props.post.id, newCommentText.value);
+    comments.value.push(newComment);
+    newCommentText.value = '';
+  } catch (err) {
+    console.error('Ошибка создания комментария:', err);
+  } finally {
+    submittingComment.value = false;
+  }
+};
 </script>
 
 <style scoped>
@@ -144,7 +218,7 @@ defineEmits(['delete', 'toggleLike']);
   gap: 0.5rem;
 }
 
-.btn-like {
+.btn-like, .btn-comment {
   background: none;
   border: none;
   cursor: pointer;
@@ -154,11 +228,11 @@ defineEmits(['delete', 'toggleLike']);
   border-radius: 0.5rem;
 }
 
-.btn-like:hover:not(:disabled) {
+.btn-like:hover:not(:disabled), .btn-comment:hover:not(:disabled) {
   transform: scale(1.2);
 }
 
-.btn-like:disabled {
+.btn-like:disabled, .btn-comment:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -216,5 +290,83 @@ defineEmits(['delete', 'toggleLike']);
 
 .icon {
   font-size: 1rem;
+}
+
+.comments-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.comments-section h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #374151;
+}
+
+.loading-text, .no-comments {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.comments-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comment-item {
+  background: #f9fafb;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.comment-item strong {
+  color: #111827;
+  margin-right: 0.25rem;
+}
+
+.comment-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.comment-form input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.comment-form input:focus {
+  border-color: #667eea;
+}
+
+.btn-submit-comment {
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btn-submit-comment:hover:not(:disabled) {
+  background: #5a67d8;
+}
+
+.btn-submit-comment:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

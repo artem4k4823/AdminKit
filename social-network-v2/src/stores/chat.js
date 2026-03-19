@@ -328,8 +328,8 @@ export const useChatStore = defineStore('chat', {
 
     async loadActiveChats() {
       try {
-        const chatIds = await api.getAllMyChats();
-        this.activeChats = chatIds;
+        const users = await api.getAllMyChats();
+        this.activeChats = users.map(u => u.id);
       } catch (error) {
         console.error('Ошибка загрузки активных чатов:', error);
       }

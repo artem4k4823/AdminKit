@@ -31,87 +31,90 @@
             </button>
           </div>
           
-          <div v-if="searchError" class="error-small">
-            {{ searchError }}
-          </div>
           
-          <div v-if="searchResult" class="search-result-box">
-            <div 
-              :class="['user-item', { active: selectedUser?.id === searchResult.id }]"
-              @click="selectUser(searchResult)"
-            >
-              <div class="user-avatar-small">
-                <img 
-                  v-if="searchResult.avatar" 
-                  :src="searchResult.avatar" 
-                  :alt="searchResult.username"
-                  class="avatar-img"
-                />
-                <span v-else>{{ searchResult.username.charAt(0).toUpperCase() }}</span>
-              </div>
-              <div class="user-details">
-                <h4>{{ searchResult.username }}</h4>
-                <p class="user-id-small">Найден</p>
-              </div>
+          <div class="sidebar-content">
+            <div v-if="searchError" class="error-small">
+              {{ searchError }}
             </div>
-            <div class="divider-small"></div>
-          </div>
-          
-          <!-- Активные чаты -->
-          <div v-if="activeChatsUsers.length > 0" class="active-chats-section">
-            <div class="section-label">Активные чаты ({{ activeChatsUsers.length }})</div>
-            <div 
-              v-for="user in activeChatsUsers" 
-              :key="user.id"
-              :class="['user-item', { active: selectedUser?.id === user.id }]"
-              @click="selectUser(user)"
-            >
-              <div class="user-avatar-small">
-                <img 
-                  v-if="user.avatar" 
-                  :src="user.avatar" 
-                  :alt="user.displayName || user.username"
-                  class="avatar-img"
-                />
-                <span v-else>{{ (user.displayName || user.username)?.charAt(0).toUpperCase() }}</span>
+            
+            <div v-if="searchResult" class="search-result-box">
+              <div 
+                :class="['user-item', { active: selectedUser?.id === searchResult.id }]"
+                @click="selectUser(searchResult)"
+              >
+                <div class="user-avatar-small">
+                  <img 
+                    v-if="searchResult.avatar" 
+                    :src="searchResult.avatar" 
+                    :alt="searchResult.username"
+                    class="avatar-img"
+                  />
+                  <span v-else>{{ searchResult.username.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="user-details">
+                  <h4>{{ searchResult.username }}</h4>
+                  <p class="user-id-small">Найден</p>
+                </div>
               </div>
-              <div class="user-details">
-                <h4>{{ user.displayName || user.username }}</h4>
-                <p class="user-id-small">ID: {{ user.id }}</p>
-              </div>
-              <span v-if="hasUnreadFrom(user.id)" class="unread-indicator">●</span>
+              <div class="divider-small"></div>
             </div>
-            <div class="divider-small"></div>
-          </div>
-          
-          <div v-if="loadingUsers" class="loading-sidebar">
-            <div class="spinner-small"></div>
-            <p>Загрузка...</p>
-          </div>
-          
-          <div v-else-if="otherUsers.length === 0" class="empty-sidebar">
-            <p>Нет пользователей</p>
-          </div>
-          
-          <div v-else class="users-list">
-            <div 
-              v-for="user in otherUsers" 
-              :key="user.id"
-              :class="['user-item', { active: selectedUser?.id === user.id }]"
-              @click="selectUser(user)"
-            >
-              <div class="user-avatar-small">
-                <img 
-                  v-if="user.avatar" 
-                  :src="user.avatar" 
-                  :alt="user.displayName || user.username"
-                  class="avatar-img"
-                />
-                <span v-else>{{ (user.displayName || user.username)?.charAt(0).toUpperCase() }}</span>
+            
+            <!-- Активные чаты -->
+            <div v-if="activeChatsUsers.length > 0" class="active-chats-section">
+              <div class="section-label">Активные чаты ({{ activeChatsUsers.length }})</div>
+              <div 
+                v-for="user in activeChatsUsers" 
+                :key="user.id"
+                :class="['user-item', { active: selectedUser?.id === user.id }]"
+                @click="selectUser(user)"
+              >
+                <div class="user-avatar-small">
+                  <img 
+                    v-if="user.avatar" 
+                    :src="user.avatar" 
+                    :alt="user.displayName || user.username"
+                    class="avatar-img"
+                  />
+                  <span v-else>{{ (user.displayName || user.username)?.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="user-details">
+                  <h4>{{ user.displayName || user.username }}</h4>
+                  <p class="user-id-small">ID: {{ user.id }}</p>
+                </div>
+                <span v-if="hasUnreadFrom(user.id)" class="unread-indicator">●</span>
               </div>
-              <div class="user-details">
-                <h4>{{ user.displayName || user.username }}</h4>
-                <p class="user-id-small">ID: {{ user.id }}</p>
+              <div class="divider-small"></div>
+            </div>
+            
+            <div v-if="loadingUsers" class="loading-sidebar">
+              <div class="spinner-small"></div>
+              <p>Загрузка...</p>
+            </div>
+            
+            <div v-else-if="otherUsers.length === 0 && activeChatsUsers.length === 0" class="empty-sidebar">
+              <p>Нет пользователей</p>
+            </div>
+            
+            <div v-else-if="otherUsers.length > 0" class="users-list">
+              <div 
+                v-for="user in otherUsers" 
+                :key="user.id"
+                :class="['user-item', { active: selectedUser?.id === user.id }]"
+                @click="selectUser(user)"
+              >
+                <div class="user-avatar-small">
+                  <img 
+                    v-if="user.avatar" 
+                    :src="user.avatar" 
+                    :alt="user.displayName || user.username"
+                    class="avatar-img"
+                  />
+                  <span v-else>{{ (user.displayName || user.username)?.charAt(0).toUpperCase() }}</span>
+                </div>
+                <div class="user-details">
+                  <h4>{{ user.displayName || user.username }}</h4>
+                  <p class="user-id-small">ID: {{ user.id }}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -161,7 +164,10 @@ const currentUser = computed(() => authStore.currentUser);
 const isConnected = computed(() => chatStore.isConnected);
 
 const otherUsers = computed(() => {
-  return allUsers.value.filter(user => user.id !== currentUser.value?.id);
+  const activeIds = chatStore.activeChats;
+  return allUsers.value.filter(user => 
+    user.id !== currentUser.value?.id && !activeIds.includes(user.id)
+  );
 });
 
 const activeChatsUsers = computed(() => {
@@ -179,7 +185,7 @@ const fetchUsers = async () => {
   loadingUsers.value = true;
   
   try {
-    allUsers.value = await api.getAllUsers();
+    allUsers.value = await api.getAllMyChats();
     
     // Если в URL есть параметр userId, открываем этот чат
     if (route.query.userId) {
@@ -195,6 +201,22 @@ const fetchUsers = async () => {
     loadingUsers.value = false;
   }
 };
+
+watch(() => chatStore.activeChats, async (newActiveIds) => {
+  const missingIds = newActiveIds.filter(id => !allUsers.value.some(u => u.id === id));
+  if (missingIds.length > 0) {
+    for (const id of missingIds) {
+      try {
+        const user = await api.getUserById(id);
+        if (user && !allUsers.value.some(u => u.id === id)) {
+          allUsers.value.push(user);
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки недостающего пользователя:', err);
+      }
+    }
+  }
+}, { deep: true });
 
 const selectUser = (user) => {
   selectedUser.value = user;
@@ -403,6 +425,30 @@ onMounted(async () => {
   color: #6b7280;
 }
 
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+  background-color: #94a3b8;
+}
+
 .spinner-small {
   width: 30px;
   height: 30px;
@@ -416,10 +462,7 @@ onMounted(async () => {
   to { transform: rotate(360deg); }
 }
 
-.users-list {
-  flex: 1;
-  overflow-y: auto;
-}
+
 
 .user-item {
   display: flex;

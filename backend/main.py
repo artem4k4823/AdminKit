@@ -14,6 +14,7 @@ from app.api_v1.user_operation_views import router as user_router
 from app.api_v1.auth_veiws import router as OAuth_jwt_router
 from app.api_v1.posts_veiws import router as posts_router
 from app.api_v1.chat_veiws import router as chat_router
+from app.api_v1.comment_veiws import router as comment_router
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
@@ -31,6 +32,7 @@ app.include_router(user_router)
 app.include_router(OAuth_jwt_router)
 app.include_router(posts_router)
 app.include_router(chat_router)
+app.include_router(comment_router)
 
 admin.add_view(UserAdmin)
 admin.add_view(PostAdmin)
