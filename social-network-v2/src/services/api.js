@@ -188,8 +188,8 @@ export default {
   createWebSocket(userId) {
     // WebSocket должен подключаться напрямую к бэкенду, а не через Vite proxy
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Используем localhost:8000 для WebSocket (бэкенд)
-    const wsUrl = `${wsProtocol}//localhost:8000/chat/ws/${userId}`;
+    // Используем window.location.hostname:8000 для WebSocket (бэкенд)
+    const wsUrl = `${wsProtocol}//${window.location.hostname}:8000/chat/ws/${userId}`;
     console.log('🔌 Создаем WebSocket соединение:', wsUrl);
     return new WebSocket(wsUrl);
   }
