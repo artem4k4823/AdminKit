@@ -23,7 +23,9 @@ admin = Admin(app, engine=db.engine, authentication_backend = AdminAuth(secret_k
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173","http://176.123.163.234",
+        "http://176.123.163.234:80",
+        "http://176.123.163.234:8000",],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
