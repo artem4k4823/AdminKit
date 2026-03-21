@@ -40,11 +40,11 @@
             <form @submit.prevent="handleUpdateProfile">
               <div class="form-group">
                 <label>Отображаемое имя</label>
-                <input v-model="editForm.displayName" type="text" placeholder="Отображаемое имя" />
+                <input v-model="editForm.displayName" type="text" placeholder="Отображаемое имя" minlength="3" maxlength="20" />
               </div>
               <div class="form-group">
                 <label>Логин (@username)</label>
-                <input v-model="editForm.username" type="text" placeholder="Логин" />
+                <input v-model="editForm.username" type="text" placeholder="Логин" minlength="3" maxlength="20" />
               </div>
               <div class="form-group">
                 <label>Аватар</label>
@@ -781,6 +781,10 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 0 1rem 1rem;
+  }
+
   .profile-header {
     flex-direction: column;
     text-align: center;

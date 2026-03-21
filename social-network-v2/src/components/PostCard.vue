@@ -172,6 +172,7 @@ const handleCreateComment = async () => {
   font-size: 1.25rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
+  word-break: break-word;
 }
 
 .author-info {
@@ -254,6 +255,8 @@ const handleCreateComment = async () => {
   color: #374151;
   line-height: 1.7;
   font-size: 1rem;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .post-footer {
@@ -324,6 +327,7 @@ const handleCreateComment = async () => {
   padding: 0.5rem 0.75rem;
   border-radius: 0.5rem;
   font-size: 0.9rem;
+  word-break: break-word;
 }
 
 .comment-item strong {

@@ -15,6 +15,8 @@
             type="text" 
             required
             placeholder="Введите логин"
+            minlength="3"
+            maxlength="20"
           />
         </div>
         
@@ -26,6 +28,8 @@
             type="text" 
             required
             placeholder="Как вас будут видеть"
+            minlength="3"
+            maxlength="20"
           />
         </div>
         
@@ -38,6 +42,7 @@
             required
             placeholder="Введите пароль"
             minlength="6"
+            maxlength="40"
           />
         </div>
         
@@ -49,6 +54,8 @@
             type="password" 
             required
             placeholder="Повторите пароль"
+            minlength="6"
+            maxlength="40"
           />
         </div>
         

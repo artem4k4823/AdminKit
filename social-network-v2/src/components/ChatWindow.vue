@@ -50,6 +50,8 @@
         @keydown.enter.prevent="handleSendMessage"
         placeholder="Введите сообщение... (Enter для отправки)"
         rows="2"
+        minlength="1"
+        maxlength="500"
       ></textarea>
       <button 
         @click="handleSendMessage" 
@@ -307,11 +309,19 @@ watchEffect(() => {
 .message-content p {
   margin: 0 0 0.5rem 0;
   line-height: 1.5;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
 .message-time {
   font-size: 0.75rem;
   opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .message-content {
+    max-width: 85%;
+  }
 }
 
 .message-input {

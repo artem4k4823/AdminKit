@@ -17,6 +17,8 @@
               v-model="newPost.title" 
               type="text" 
               placeholder="Заголовок поста"
+              minlength="3"
+              maxlength="40"
               required
             />
           </div>
@@ -26,6 +28,8 @@
               v-model="newPost.description" 
               placeholder="Расскажите что-нибудь интересное..."
               rows="4"
+              minlength="3"
+              maxlength="500"
               required
             ></textarea>
           </div>
@@ -469,6 +473,10 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .container {
+    padding: 0 1rem 1rem;
+  }
+
   .posts-grid {
     grid-template-columns: 1fr;
   }

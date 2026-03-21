@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from sqladmin import Admin
+import asyncio
+
+from app.core.models import Base
 from app.core.database import db
 from app.core.admin_auth import AdminAuth
 from app.core.config import settings
@@ -17,9 +20,16 @@ from app.api_v1.chat_veiws import router as chat_router
 from app.api_v1.comment_veiws import router as comment_router
 from fastapi.staticfiles import StaticFiles
 
-app = FastAPI()
+
+async def lifespan(app: FastAPI):
+    
+    print("Starting up...")
+    
+
+app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 admin = Admin(app, engine=db.engine, authentication_backend = AdminAuth(secret_key=settings.SECRET_KEY))
+
 
 app.add_middleware(
     CORSMiddleware,
