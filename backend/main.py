@@ -21,12 +21,10 @@ from app.api_v1.comment_veiws import router as comment_router
 from fastapi.staticfiles import StaticFiles
 
 
-async def lifespan(app: FastAPI):
-    
-    print("Starting up...")
+
     
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 admin = Admin(app, engine=db.engine, authentication_backend = AdminAuth(secret_key=settings.SECRET_KEY))
 
