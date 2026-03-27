@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const API_URL = 'https://socset.ddns.net/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -186,10 +188,7 @@ export default {
 
   // ==================== WEBSOCKET ====================
   createWebSocket(userId) {
-    // WebSocket должен подключаться напрямую к бэкенду, а не через Vite proxy
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Используем window.location.hostname:8000 для WebSocket (бэкенд)
-    const wsUrl = `${wsProtocol}//${window.location.hostname}:8000/chat/ws/${userId}`;
+    const wsUrl = `wss://socset.ddns.net/chat/ws/${userId}`;
     console.log('🔌 Создаем WebSocket соединение:', wsUrl);
     return new WebSocket(wsUrl);
   }
