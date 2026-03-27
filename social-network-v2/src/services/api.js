@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://socset.ddns.net/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -188,7 +188,13 @@ export default {
 
   // ==================== WEBSOCKET ====================
   createWebSocket(userId) {
-    const wsUrl = `wss://socset.ddns.net/chat/ws/${userId}`;
+    let wsUrl;
+    if (import.meta.env.VITE_WS_URL) {
+      wsUrl = `${import.meta.env.VITE_WS_URL}/${userId}`;
+    } else {
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      wsUrl = `${wsProtocol}//${window.location.hostname}:8000/chat/ws/${userId}`;
+    }
     console.log('🔌 Создаем WebSocket соединение:', wsUrl);
     return new WebSocket(wsUrl);
   }
