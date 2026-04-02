@@ -8,6 +8,7 @@ jobs:
       - name: Checkout
         run: pip install -r backend/requirements.txt
   test:
+    needs: [lint]
     runs-on: ubuntu-latest
     steps: 
       - uses: actions/checkout@v3
@@ -19,3 +20,8 @@ jobs:
           cd backend
           export PYTHONPATH="${PYTHONPATH}:$(pwd)"
           python -m pytest tests/test_api.py -v
+  secret:
+    runs-on: ubuntu-latest
+    steps:
+      - name: print secrets
+        run: echo ${{secrets.Test}}
