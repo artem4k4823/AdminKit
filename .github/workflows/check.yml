@@ -14,6 +14,7 @@ jobs:
       - name: Checkout
         run: pip install -r backend/requirements.txt
       - name: Test
-        run: python -m pytest backend/tests/test_api.py
+        working-directory: ./backend
+        run: PYTHONPATH=. python -m pytest tests/test_api.py
 
        
