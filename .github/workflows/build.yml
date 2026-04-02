@@ -1,0 +1,22 @@
+name: Build
+on:
+ push:
+    branches: [master]
+jobs:
+ build:
+    runs-on: self-hosted
+    steps:
+     - name: Set up QEMU
+       uses: docker/setup-qemu-action@v2
+     - name: Set up Docker Buildx
+       uses: docker/setup-buildx-action@v2
+     - name: Build and push actions
+       uses: docker/build-push-action@v3
+       with:
+        file: Dockerfile
+        push: false
+        tags: user/app:latest
+
+        
+
+    
