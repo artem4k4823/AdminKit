@@ -13,7 +13,7 @@ jobs:
      - name: Build and push actions
        uses: docker/build-push-action@v3
        with:
-        file: Dockerfile
+        file: backend/Dockerfile
         push: false
         tags: user/app:latest
 
