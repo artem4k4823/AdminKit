@@ -16,6 +16,5 @@ jobs:
         run: pip install -r requirements.txt
       - name: Test
         run: |
-          cd backend
-          PYTHONPATH=. python -m pytest tests/test_api.py -v
-       
+          export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+          python -m pytest tests/test_api.py -v
