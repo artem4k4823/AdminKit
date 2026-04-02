@@ -11,10 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps: 
       - uses: actions/checkout@v3
-      - name: Checkout
-        run: pip install -r backend/requirements.txt
-      - name: Test
+      - name: install deps
         working-directory: ./backend
-        run: PYTHONPATH=. python -m pytest tests/test_api.py
-
+        run: pip install -r requirements.txt
+      - name: Test
+        run: |
+          cd backend
+          PYTHONPATH=. python -m pytest tests/test_api.py -v
        
