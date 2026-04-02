@@ -5,16 +5,12 @@ jobs:
     runs-on: ubuntu-latest
     steps: 
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
       - name: Checkout
         run: pip install -r backend/requirements.txt
   test:
     runs-on: ubuntu-latest
     steps: 
       - uses: actions/checkout@v3
-        with:
-          submodules: recursive
       - name: install deps
         working-directory: ./backend
         run: pip install -r requirements.txt
