@@ -37,29 +37,42 @@
           :class="['message', { own: message.sender_id === currentUserId }]"
         >
           <div class="message-content">
-            <p>{{ message.content }}</p>
+            <div class="message-text">
+              <p>{{ message.content }}</p>
+              <div v-if="message.sender_id === currentUserId" class="message-actions">
+                <button @click="startEdit(message)" title="Редактировать" class="btn-action">✏️</button>
+                <button @click="confirmDelete(message.id)" title="Удалить" class="btn-action delete">🗑️</button>
+              </div>
+            </div>
             <span class="message-time">{{ formatTime(message.created_at) }}</span>
           </div>
         </div>
       </div>
     </div>
     
-    <div class="message-input">
-      <textarea
-        v-model="newMessage"
-        @keydown.enter.prevent="handleSendMessage"
-        placeholder="Введите сообщение... (Enter для отправки)"
-        rows="2"
-        minlength="1"
-        maxlength="500"
-      ></textarea>
-      <button 
-        @click="handleSendMessage" 
-        :disabled="!newMessage.trim() || sending"
-        class="btn-send"
-      >
-        <span class="icon">{{ sending ? '⏳' : '📤' }}</span>
-      </button>
+    <div class="message-input" :class="{ 'editing-mode': isEditing }">
+      <div v-if="isEditing" class="editing-header">
+        <span>✏️ Редактирование сообщения</span>
+        <button @click="cancelEdit" class="btn-cancel-edit">✕</button>
+      </div>
+      <div class="input-wrapper">
+        <textarea
+          v-model="newMessage"
+          @keydown.enter.prevent="handleSendMessage"
+          :placeholder="isEditing ? 'Измените сообщение...' : 'Введите сообщение... (Enter для отправки)'"
+          rows="2"
+          minlength="1"
+          maxlength="500"
+        ></textarea>
+        <button 
+          @click="handleSendMessage" 
+          :disabled="!newMessage.trim() || sending"
+          class="btn-send"
+          :title="isEditing ? 'Сохранить изменения' : 'Отправить'"
+        >
+          <span class="icon">{{ sending ? '⏳' : (isEditing ? '✅' : '📤') }}</span>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -85,10 +98,12 @@ const newMessage = ref('');
 const sending = ref(false);
 const loading = ref(false);
 const messagesContainer = ref(null);
+const editingMessageId = ref(null);
 
 const currentUserId = computed(() => authStore.userId);
 const messages = computed(() => chatStore.getCurrentChatMessages);
 const isOnline = computed(() => chatStore.isConnected);
+const isEditing = computed(() => editingMessageId.value !== null);
 
 const formatTime = (dateString) => {
   const date = new Date(dateString);
@@ -101,20 +116,47 @@ const formatTime = (dateString) => {
   return date.toLocaleDateString('ru-RU');
 };
 
+const startEdit = (message) => {
+  editingMessageId.value = message.id;
+  newMessage.value = message.content;
+};
+
+const cancelEdit = () => {
+  editingMessageId.value = null;
+  newMessage.value = '';
+};
+
+const confirmDelete = async (messageId) => {
+  if (confirm('Вы уверены, что хотите удалить это сообщение?')) {
+    try {
+      await chatStore.deleteMessage(messageId);
+    } catch (error) {
+      alert('Ошибка при удалении сообщения');
+    }
+  }
+};
+
 const handleSendMessage = async () => {
   if (!newMessage.value.trim() || sending.value) return;
   
   sending.value = true;
   const content = newMessage.value.trim();
-  newMessage.value = '';
   
   try {
-    await chatStore.sendMessage(props.chatUser.id, content);
-    await nextTick();
-    scrollToBottom();
+    if (isEditing.value) {
+      await chatStore.editMessage(editingMessageId.value, content);
+      cancelEdit();
+    } else {
+      newMessage.value = '';
+      await chatStore.sendMessage(props.chatUser.id, content);
+      await nextTick();
+      scrollToBottom();
+    }
   } catch (error) {
-    console.error('Ошибка отправки сообщения:', error);
-    newMessage.value = content;
+    console.error('Ошибка при обработке сообщения:', error);
+    if (!isEditing.value) {
+      newMessage.value = content;
+    }
   } finally {
     sending.value = false;
   }
@@ -296,6 +338,49 @@ watchEffect(() => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+.message-text {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.message-actions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.message:hover .message-actions {
+  opacity: 1;
+}
+
+.btn-action {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.btn-action:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.message.own .btn-action:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-action.delete:hover {
+  background-color: rgba(239, 68, 68, 0.2);
+}
+
 .message.own .message-content {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
@@ -311,6 +396,7 @@ watchEffect(() => {
   line-height: 1.5;
   word-break: break-word;
   white-space: pre-wrap;
+  flex: 1;
 }
 
 .message-time {
@@ -322,14 +408,46 @@ watchEffect(() => {
   .message-content {
     max-width: 85%;
   }
+  .message-actions {
+    opacity: 1; /* Всегда показывать на мобильных */
+  }
 }
 
 .message-input {
   display: flex;
-  gap: 1rem;
-  padding: 1.5rem;
+  flex-direction: column;
+  padding: 1rem 1.5rem;
   background: white;
   border-top: 1px solid #e5e7eb;
+}
+
+.message-input.editing-mode {
+  background-color: #fefce8;
+}
+
+.editing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px dashed #facc15;
+  font-size: 0.875rem;
+  color: #a16207;
+}
+
+.btn-cancel-edit {
+  background: none;
+  border: none;
+  color: #991b1b;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+}
+
+.input-wrapper {
+  display: flex;
+  gap: 1rem;
 }
 
 .message-input textarea {
@@ -340,7 +458,7 @@ watchEffect(() => {
   font-family: inherit;
   font-size: 1rem;
   resize: none;
-  transition: border-color 0.3s;
+  transition: all 0.3s;
 }
 
 .message-input textarea:focus {

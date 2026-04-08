@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from sqlalchemy import select, and_, or_
 import json
-from app.schemas.message import MessageCreate, MessageResponse
+from app.schemas.message import MessageCreate, MessageResponse,  MessageEdit
 from app.core.database import db
 from app.core.models.users import User, Message
 from app.crud.auth import get_current_user
@@ -28,9 +28,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
             data = await websocket.receive_text()
             message_data = json.loads(data)
             
-            
             event_type = message_data.get("type", "message")
-            
             
             if event_type in ["message", "chat_message"]:
                 
@@ -43,18 +41,15 @@ async def websocket_endpoint(websocket: WebSocket, user_id: int):
                     }))
             
             elif event_type == "ping":
-                
                 await websocket.send_text(json.dumps({"type": "pong"}))
             
             else:
-                
                 await broadcast_to_all(message_data, exclude_user=user_id)
     
     except WebSocketDisconnect:
-        
         if user_id in active_connections:
             del active_connections[user_id]
-        print(f"User {user_id} disconnected")
+        # print(f"User {user_id} disconnected") - логировать!
 
 
 async def broadcast_to_all(data: dict, exclude_user: int = None):
@@ -68,11 +63,11 @@ async def broadcast_to_all(data: dict, exclude_user: int = None):
         
         try:
             await connection.send_text(json.dumps(data))
-            print(f"✅ Sent to user {user_id}: {data.get('type')}")
+            # print(f"✅ Sent to user {user_id}: {data.get('type')}") - логировать!
         except:
             
             disconnected.append(user_id)
-            print(f"❌ Failed to send to user {user_id}")
+            # print(f"❌ Failed to send to user {user_id}") - логировать!
     
     
     for user_id in disconnected:
@@ -139,6 +134,40 @@ async def mark_as_read(message_id: int, session: Annotated[AsyncSession, Depends
     await session.commit()
     
     return {"status": "message marked as read"}
+
+
+@router.delete('/messages/{message_id}/delete/')
+async def delete_message(message_id: int, deps: Tuple[User, AsyncSession] = Depends(get_current_user)):
+    user, session= deps
+    stmt = select(Message).where(Message.id == message_id)
+    result = await session.execute(stmt)
+    message = result.scalar_one_or_none()
+    if not message:
+        raise HTTPException(status_code=404, detail="Message not found")
+    if message.sender_id == user.id or user.isAdmin == True:
+        await session.delete(message)
+        await session.commit()
+        return {"status": "message deleted"}
+    else:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="You are not authorized to delete this message")
+    
+
+@router.patch("/messages/{message_id}/edit/")
+async def edit_message(message_id: int, message: MessageEdit, deps: Tuple[User, AsyncSession] = Depends(get_current_user)):
+    user, session = deps
+    stmt = select(Message).where(Message.id == message_id)
+    result = await session.execute(stmt)
+    message_bd = result.scalar_one_or_none()
+    if not message_bd:
+        raise HTTPException(status_code=404, detail="Message not found")
+    
+    if message_bd.sender_id == user.id or user.isAdmin == True:
+        message_bd.content =message.content
+        await session.commit()
+        return message_bd
+    else:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, detail="You are not authorized to edit this message")
+        
 
 
 @router.get("/unread/{user_id}/")

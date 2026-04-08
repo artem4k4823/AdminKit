@@ -286,6 +286,47 @@ export const useChatStore = defineStore('chat', {
       }
     },
 
+    async deleteMessage(messageId) {
+      try {
+        await api.deleteMessage(messageId);
+        
+        // Удаляем сообщение из локального состояния
+        for (const userId in this.messages) {
+          const index = this.messages[userId].findIndex(m => m.id === messageId);
+          if (index !== -1) {
+            this.messages[userId].splice(index, 1);
+            this.messages = { ...this.messages }; // Триггерим реактивность
+            console.log('🗑️ Сообщение удалено локально:', messageId);
+            break;
+          }
+        }
+      } catch (error) {
+        console.error('❌ Ошибка удаления сообщения:', error);
+        throw error;
+      }
+    },
+
+    async editMessage(messageId, content) {
+      try {
+        const updatedMessage = await api.editMessage(messageId, content);
+        
+        // Обновляем сообщение в локальном состоянии
+        for (const userId in this.messages) {
+          const index = this.messages[userId].findIndex(m => m.id === messageId);
+          if (index !== -1) {
+            this.messages[userId][index].content = updatedMessage.content;
+            this.messages = { ...this.messages }; // Триггерим реактивность
+            console.log('✏️ Сообщение обновлено локально:', messageId);
+            break;
+          }
+        }
+        return updatedMessage;
+      } catch (error) {
+        console.error('❌ Ошибка редактирования сообщения:', error);
+        throw error;
+      }
+    },
+
     async loadChatHistory(userId) {
       const authStore = useAuthStore();
       const currentUserId = authStore.userId;

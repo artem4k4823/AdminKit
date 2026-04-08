@@ -31,7 +31,7 @@ async def get_current_user(
     
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    user = chek_user(session=session, user=user)
+    user = chek_user(user=user)
     
     
     return user, session

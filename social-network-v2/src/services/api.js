@@ -186,6 +186,18 @@ export default {
     return response.data;
   },
 
+  async deleteMessage(messageId) {
+    const response = await api.delete(`/chat/messages/${messageId}/delete/`);
+    return response.data;
+  },
+
+  async editMessage(messageId, content) {
+    const response = await api.patch(`/chat/messages/${messageId}/edit/`, {
+      content
+    });
+    return response.data;
+  },
+
   // ==================== WEBSOCKET ====================
   createWebSocket(userId) {
     let wsUrl;

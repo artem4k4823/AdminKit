@@ -86,7 +86,7 @@ async def get_authenticate_user_data(session:AsyncSession, token:str ):
     return user
 
 
-def chek_user(session: AsyncSession, user: UserSchema):
+def chek_user(user: UserSchema):
     if user.status == 0:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User is blocked")
     return user
