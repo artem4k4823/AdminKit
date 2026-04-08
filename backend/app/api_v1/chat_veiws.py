@@ -136,7 +136,7 @@ async def mark_as_read(message_id: int, session: Annotated[AsyncSession, Depends
     return {"status": "message marked as read"}
 
 
-@router.delete('/messages/{message_id}/delete/')
+@router.delete('/messages/{message_id}/delete')
 async def delete_message(message_id: int, deps: Tuple[User, AsyncSession] = Depends(get_current_user)):
     user, session= deps
     stmt = select(Message).where(Message.id == message_id)
@@ -152,7 +152,7 @@ async def delete_message(message_id: int, deps: Tuple[User, AsyncSession] = Depe
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail="You are not authorized to delete this message")
     
 
-@router.patch("/messages/{message_id}/edit/")
+@router.patch("/messages/{message_id}/edit")
 async def edit_message(message_id: int, message: MessageEdit, deps: Tuple[User, AsyncSession] = Depends(get_current_user)):
     user, session = deps
     stmt = select(Message).where(Message.id == message_id)

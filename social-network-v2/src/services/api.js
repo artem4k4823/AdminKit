@@ -187,12 +187,12 @@ export default {
   },
 
   async deleteMessage(messageId) {
-    const response = await api.delete(`/chat/messages/${messageId}/delete/`);
+    const response = await api.delete(`/chat/messages/${messageId}/delete`);
     return response.data;
   },
 
   async editMessage(messageId, content) {
-    const response = await api.patch(`/chat/messages/${messageId}/edit/`, {
+    const response = await api.patch(`/chat/messages/${messageId}/edit`, {
       content
     });
     return response.data;
